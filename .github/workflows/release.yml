@@ -1,0 +1,85 @@
+name: Build and Release SwagOS
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger the workflow on version tags like v1.0.0
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: swagos
+            asset_name: swagos-linux
+          - os: windows-latest
+            artifact_name: swagos.exe
+            asset_name: swagos-windows.exe
+          - os: macos-latest
+            artifact_name: swagos
+            asset_name: swagos-macos
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # Choose your Python version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller colorama playsound3 bcrypt
+
+    - name: Build with PyInstaller
+      run: pyinstaller --onefile --name swagos main.py
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.asset_name }}
+        path: dist/${{ matrix.artifact_name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Important for creating a release
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: swagos-windows.exe
+          path: ./dist
+          
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: swagos-linux
+          path: ./dist
+          
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: swagos-macos
+          path: ./dist
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./dist/swagos-windows.exe
+            ./dist/swagos-linux
+            ./dist/swagos-macos
+          generate_release_notes: true
