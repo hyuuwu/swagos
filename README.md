@@ -35,3 +35,5 @@ A: Maybe,if i learn Archiso.
 - And etc!
 
 # Made with <3 by Luiz A.
+
+Ps: Portuguese readme is LEIAME.md
