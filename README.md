@@ -13,3 +13,6 @@
 ## FAQ:
 ### Q: How will u optmize the code?
 A: Splitting the code in 2 files; Commands and Main.
+
+### Q: Will you actually make this an os
+A: Maybe,if i learn Archiso.
