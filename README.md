@@ -26,7 +26,7 @@ A: Maybe,if i learn Archiso.
 - Run ``python main.py``
 - Enjoy!
 ### Running from builds
-- Install the app from the [**Relases page**](https://github.com/hyuuwu/swagos/releases/)
+- Install the app from the [**Releases page**](https://github.com/hyuuwu/swagos/releases/)
 
 ## Contribute:
 ### You can contribute to this project by:
