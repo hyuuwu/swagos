@@ -1,8 +1,10 @@
 import os
 import time, sys, platform, threading, bcrypt, getpass, subprocess
 import subprocess as sub
-from playsound3 import playsound
-
+from playsound3 import playsound # (not implemented yet)
+from colorama import init, Fore
+from random import randint as rand
+init()
 
 
 
@@ -76,7 +78,7 @@ Available commands:
 - pwd: Print working directory
 - clear: Clear the screen
 - exit: Exit the shell
-- help: Show this help message
+- help: Show this help message(additional help with --os, --security and --code
 - whoami: who am i?
 - lsblk: List block devices (doesn't run on windows)
 - mkdir: Create a directory
@@ -84,6 +86,7 @@ Available commands:
 - mv: Move/Rename a file
 - echo: Print text
 - appstore: Browse and install apps
+- randomgame: Guessing game
             """
         )
     elif command == "lsblk":
@@ -137,5 +140,15 @@ Available commands:
             print(f"Saved {fn}")
         else:
             print("vim isnt enabled, please install it on appstore.")
+    elif command == "help --os":
+        print(Fore.GREEN + "In the SwagOS TUI, You can use commands from your own host OS!\nEx: ls = runs on your own os\nvim: runs the vim from SwagOS.")
+    elif command == "help --security":
+        print(Fore.BLUE + "In SwagOS, we take your password very seriously. The password is encrypted with bcrypt and only decrypted with the original password + the hash.")
+        #idfk what to write, what a dumb idea of mine
+    elif command == ":)":
+        print(":D")
+    elif command == "randomgame":
+        return
+        #finish tmrrw
     else:
         run_subprocess(command)

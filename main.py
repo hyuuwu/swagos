@@ -53,10 +53,10 @@ if defs.is_first_run():
     hashed = bcrypt.hashpw(bytz, bcrypt.gensalt())
     with open("p.cfg", "wb") as f:
         f.write(hashed)
-    hn = input("Whats is this computer called?\n(Tip: If you want,you can use names like 'LinuxWannabe', or even 'uwu'.)\n> ")
+    hn = input(Fore.LIGHTBLACK_EX + "Whats is this computer called?\n(Tip: If you want,you can use names like 'LinuxWannabe', or even 'uwu'.)\n> ")
     with open("h.cfg", "w") as f:
         f.write(hn)
-    print(Fore.GREEN + "Welcome to SwagOS!")
+    print(Fore.YELLOW + "Welcome to SwagOS!")
 
 else:
     if not all(os.path.exists(f) for f in ["h.cfg", "u.cfg", "p.cfg"]):
@@ -73,9 +73,9 @@ else:
         pss = p_file.read().strip()
 
     while True:
-        passwdtst = getpass.getpass("Whats your password?\n> ")
+        passwdtst = getpass.getpass(Fore.LIGHTBLACK_EX + "Whats your password?\n> ")
         if bcrypt.checkpw(passwdtst.encode("utf-8"), pss):
-            print(Fore.GREEN + "Welcome to SwagOS.")
+            print(Fore.YELLOW + "Welcome to SwagOS.")
             break
         else:
             print(Fore.RED + "Incorrect password.")
@@ -83,7 +83,7 @@ else:
 while True:
     try:
         prompt = f"{nm}@{hn}> "
-        terminal = input(Fore.YELLOW + prompt)
+        terminal = input(Fore.GREEN + prompt)
         defs.execute_command(terminal)
     except KeyboardInterrupt:
         print("\nUse 'exit' to quit.")

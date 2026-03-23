@@ -4,6 +4,7 @@ clone.py
 u.cfg
 p.cfg
 h.cfg
+chk.cfg
 .idea
 __pycache__
 hi.hi
