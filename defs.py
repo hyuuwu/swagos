@@ -210,23 +210,33 @@ class QuestEngine:
         self._index = 0
 
     def _build_quests(self) -> List[Quest]:
+        def file_content_matches(path: str, expected: str) -> Callable[[VirtualFileSystem, DirNode], bool]:
+            def _check(vfs: VirtualFileSystem, cwd: DirNode) -> bool:
+                try:
+                    return vfs.read_file(path, cwd) == expected
+                except (FileNotFoundError, NotADirectoryError, IsADirectoryError):
+                    return False
+
+            return _check
+
         return [
             Quest(
                 description="Quest 1: Navigate to /home/user and create a file named 'hello.txt'.",
                 hint="Hint: use 'cd /home/user' and 'touch hello.txt'.",
-                check=lambda vfs, cwd: vfs.exists("/home/user/hello.txt")
-                and vfs.path_of(cwd) == "/home/user",
+                check=(
+                    lambda vfs, cwd: vfs.exists("/home/user/hello.txt")
+                    and vfs.path_of(cwd) == "/home/user"
+                ),
             ),
             Quest(
                 description="Quest 2: Create a directory named 'projects' inside /home/user.",
                 hint="Hint: use 'mkdir projects' while in /home/user.",
-                check=lambda vfs, cwd: vfs.is_dir("/home/user/projects"),
+                check=(lambda vfs, cwd: vfs.is_dir("/home/user/projects")),
             ),
             Quest(
                 description="Quest 3: Write 'Welcome' into /home/user/projects/notes.txt using echo.",
                 hint="Hint: use \"echo Welcome > /home/user/projects/notes.txt\".",
-                check=lambda vfs, cwd: vfs.exists("/home/user/projects/notes.txt")
-                and vfs.read_file("/home/user/projects/notes.txt", cwd) == "Welcome",
+                check=file_content_matches("/home/user/projects/notes.txt", "Welcome"),
             ),
         ]
 
@@ -371,7 +381,7 @@ class CommandDispatcher:
             if index + 1 >= len(args):
                 print(Fore.RED + "echo: missing file for redirection")
                 return
-            if index + 2 != len(args):
+            if len(args[index + 1 :]) != 1:
                 print(Fore.RED + "echo: too many arguments for redirection")
                 return
             target = args[index + 1]
