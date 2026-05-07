@@ -97,25 +97,31 @@ class VirtualFileSystem:
             current = current.parent
         return "/" + "/".join(reversed(parts))
 
-    def list_path(self, path: Optional[str], cwd: DirNode, show_all: bool, long_format: bool) -> List[str]:
+    def list_path(
+        self,
+        path: Optional[str],
+        cwd: DirNode,
+        include_hidden: bool,
+        long_format: bool,
+    ) -> List[str]:
         target = path if path is not None else "."
         node = self.resolve(target, cwd)
         if isinstance(node, FileNode):
             return [self._format_entry(node)] if long_format else [node.name]
         entries = list(node.children.values())
         names = sorted(child.name for child in entries)
-        if not show_all:
+        if not include_hidden:
             names = [name for name in names if not name.startswith(".")]
         if long_format:
             lines = []
-            if show_all:
+            if include_hidden:
                 lines.append(self._format_entry(node, name_override="."))
                 parent = node.parent if node.parent else node
                 lines.append(self._format_entry(parent, name_override=".."))
             for name in names:
                 lines.append(self._format_entry(node.children[name]))
             return lines
-        if show_all:
+        if include_hidden:
             return [".", ".."] + names
         return names
 
@@ -176,16 +182,16 @@ class VirtualFileSystem:
             raise ValueError("Cannot remove root.")
         del node.parent.children[node.name]
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: str, cwd: Optional[DirNode] = None) -> bool:
         try:
-            self.resolve(path, self.root)
+            self.resolve(path, cwd or self.root)
             return True
         except (FileNotFoundError, NotADirectoryError, ValueError):
             return False
 
-    def is_dir(self, path: str) -> bool:
+    def is_dir(self, path: str, cwd: Optional[DirNode] = None) -> bool:
         try:
-            node = self.resolve(path, self.root)
+            node = self.resolve(path, cwd or self.root)
             return isinstance(node, DirNode)
         except (FileNotFoundError, NotADirectoryError, ValueError):
             return False
@@ -206,7 +212,7 @@ class QuestEngine:
     def _build_quests(self) -> List[Quest]:
         return [
             Quest(
-                description="Quest 1: While in /home/user, create a file named 'hello.txt'.",
+                description="Quest 1: Navigate to /home/user and create a file named 'hello.txt'.",
                 hint="Hint: use 'cd /home/user' and 'touch hello.txt'.",
                 check=lambda vfs, cwd: vfs.exists("/home/user/hello.txt")
                 and vfs.path_of(cwd) == "/home/user",
@@ -289,7 +295,7 @@ class CommandDispatcher:
         print(self.vfs.path_of(self.cwd))
 
     def _cmd_ls(self, args: List[str]) -> None:
-        show_all = False
+        include_hidden = False
         long_format = False
         paths = []
         for arg in args:
@@ -300,7 +306,7 @@ class CommandDispatcher:
                     print(Fore.RED + f"ls: invalid option -- '{invalid_char}'")
                     return
                 if "a" in arg:
-                    show_all = True
+                    include_hidden = True
                 if "l" in arg:
                     long_format = True
             else:
@@ -311,7 +317,7 @@ class CommandDispatcher:
                 if len(targets) > 1:
                     header = target if target is not None else "."
                     print(f"{header}:")
-                for line in self.vfs.list_path(target, self.cwd, show_all, long_format):
+                for line in self.vfs.list_path(target, self.cwd, include_hidden, long_format):
                     print(line)
                 if len(targets) > 1 and index < len(targets) - 1:
                     print()
@@ -365,7 +371,7 @@ class CommandDispatcher:
             if index + 1 >= len(args):
                 print(Fore.RED + "echo: missing file for redirection")
                 return
-            if index + 2 < len(args):
+            if index + 2 != len(args):
                 print(Fore.RED + "echo: too many arguments for redirection")
                 return
             target = args[index + 1]
