@@ -80,6 +80,8 @@ else:
         else:
             print(Fore.RED + "Incorrect password.")
 
+defs.show_current_quest()
+
 while True:
     try:
         prompt = f"{nm}@{hn}> "
