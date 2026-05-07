@@ -206,7 +206,7 @@ class QuestEngine:
     def _build_quests(self) -> List[Quest]:
         return [
             Quest(
-                description="Quest 1: Navigate to /home/user and create a file named 'hello.txt'.",
+                description="Quest 1: While in /home/user, create a file named 'hello.txt'.",
                 hint="Hint: use 'cd /home/user' and 'touch hello.txt'.",
                 check=lambda vfs, cwd: vfs.exists("/home/user/hello.txt")
                 and vfs.path_of(cwd) == "/home/user",
@@ -220,7 +220,7 @@ class QuestEngine:
                 description="Quest 3: Write 'Welcome' into /home/user/projects/notes.txt using echo.",
                 hint="Hint: use \"echo Welcome > /home/user/projects/notes.txt\".",
                 check=lambda vfs, cwd: vfs.exists("/home/user/projects/notes.txt")
-                and vfs.read_file("/home/user/projects/notes.txt", vfs.root) == "Welcome",
+                and vfs.read_file("/home/user/projects/notes.txt", cwd) == "Welcome",
             ),
         ]
 
@@ -294,21 +294,29 @@ class CommandDispatcher:
         paths = []
         for arg in args:
             if arg.startswith("-"):
+                invalid = set(arg[1:]) - {"a", "l"}
+                if invalid:
+                    invalid_char = sorted(invalid)[0]
+                    print(Fore.RED + f"ls: invalid option -- '{invalid_char}'")
+                    return
                 if "a" in arg:
                     show_all = True
                 if "l" in arg:
                     long_format = True
-                if not set(arg[1:]).issubset({"a", "l"}):
-                    print(Fore.RED + f"ls: invalid option -- '{arg}'")
-                    return
             else:
                 paths.append(arg)
-        target = paths[0] if paths else None
-        try:
-            for line in self.vfs.list_path(target, self.cwd, show_all, long_format):
-                print(line)
-        except (FileNotFoundError, NotADirectoryError) as exc:
-            print(Fore.RED + f"ls: {exc}")
+        targets = paths if paths else [None]
+        for index, target in enumerate(targets):
+            try:
+                if len(targets) > 1:
+                    header = target if target is not None else "."
+                    print(f"{header}:")
+                for line in self.vfs.list_path(target, self.cwd, show_all, long_format):
+                    print(line)
+                if len(targets) > 1 and index < len(targets) - 1:
+                    print()
+            except (FileNotFoundError, NotADirectoryError) as exc:
+                print(Fore.RED + f"ls: {exc}")
 
     def _cmd_cd(self, args: List[str]) -> None:
         target = args[0] if args else "/home/user"
@@ -356,6 +364,9 @@ class CommandDispatcher:
             content = " ".join(args[:index])
             if index + 1 >= len(args):
                 print(Fore.RED + "echo: missing file for redirection")
+                return
+            if index + 2 < len(args):
+                print(Fore.RED + "echo: too many arguments for redirection")
                 return
             target = args[index + 1]
             try:
@@ -408,17 +419,17 @@ Available commands (VFS only):
         sys.exit(0)
 
 
-_VFS = VirtualFileSystem()
-_QUESTS = QuestEngine()
-_SHELL = CommandDispatcher(_VFS, _QUESTS)
+_vfs = VirtualFileSystem()
+_quests = QuestEngine()
+_shell = CommandDispatcher(_vfs, _quests)
 
 
 def execute_command(command: str) -> None:
-    _SHELL.execute(command)
+    _shell.execute(command)
 
 
 def show_current_quest() -> None:
-    quest = _QUESTS.current()
+    quest = _quests.current()
     if quest is not None:
         print(Fore.MAGENTA + quest.description)
         print(Fore.YELLOW + quest.hint)
