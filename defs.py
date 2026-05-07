@@ -381,7 +381,8 @@ class CommandDispatcher:
             if index + 1 >= len(args):
                 print(Fore.RED + "echo: missing file for redirection")
                 return
-            if len(args[index + 1 :]) != 1:
+            extra_args = args[index + 2 :]
+            if extra_args:
                 print(Fore.RED + "echo: too many arguments for redirection")
                 return
             target = args[index + 1]
@@ -405,7 +406,7 @@ class CommandDispatcher:
     def _cmd_help(self, args: List[str]) -> None:
         print(
             """
-Available commands (VFS only):
+Available commands:
 - pwd: Print working directory
 - ls [-a] [-l] [path]: List files/directories
 - cd [path]: Change directory
