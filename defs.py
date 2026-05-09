@@ -1,3 +1,4 @@
+import os
 import sys
 import shlex
 from dataclasses import dataclass, field
@@ -154,7 +155,7 @@ class VirtualFileSystem:
         elif isinstance(existing, DirNode):
             raise IsADirectoryError("Is a directory.")
 
-    def write_file(self, path: str, content: str, cwd: DirNode) -> None:
+    def write_file(self, path: str, content: str, cwd: DirNode, append: bool = False) -> None:
         parent, name = self._traverse(path, cwd, stop_before_last=True)
         if name in ("", ".", ".."):
             raise ValueError("Invalid file name.")
@@ -164,7 +165,12 @@ class VirtualFileSystem:
         if existing is None:
             parent.children[name] = FileNode(name=name, parent=parent, content=content)
         elif isinstance(existing, FileNode):
-            existing.content = content
+            if append:
+                # Add newline if needed, or just append directly depending on standard echo behavior. 
+                # Normally echo includes a trailing newline. Since we omit it in basic `echo`, let's just append.
+                existing.content += ("\n" + content if existing.content else content)
+            else:
+                existing.content = content
         else:
             raise IsADirectoryError("Is a directory.")
 
@@ -375,8 +381,15 @@ class CommandDispatcher:
         if not args:
             print()
             return
-        if ">" in args:
-            index = args.index(">")
+
+        redirect_op = None
+        if ">>" in args:
+            redirect_op = ">>"
+        elif ">" in args:
+            redirect_op = ">"
+
+        if redirect_op:
+            index = args.index(redirect_op)
             content = " ".join(args[:index])
             if index + 1 >= len(args):
                 print(Fore.RED + "echo: missing file for redirection")
@@ -387,7 +400,7 @@ class CommandDispatcher:
                 return
             target = args[index + 1]
             try:
-                self.vfs.write_file(target, content, self.cwd)
+                self.vfs.write_file(target, content, self.cwd, append=(redirect_op == ">>"))
             except (FileNotFoundError, NotADirectoryError, IsADirectoryError, ValueError) as exc:
                 print(Fore.RED + f"echo: {exc}")
             return
@@ -439,6 +452,14 @@ Available commands:
 _vfs = VirtualFileSystem()
 _quests = QuestEngine()
 _shell = CommandDispatcher(_vfs, _quests)
+
+
+def is_first_run() -> bool:
+    if not os.path.exists("chk.cfg"):
+        with open("chk.cfg", "w") as f:
+            f.write("1")
+        return True
+    return False
 
 
 def execute_command(command: str) -> None:
