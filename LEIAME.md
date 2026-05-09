@@ -35,3 +35,4 @@ R: Talvez, se eu aprender a usar o Archiso.
 - E muito mais!
 
 # Feito com <3 por Luiz A.
+#### PS: Talvez eu não atualize tanto esse projeto, e, eu boto o copilot pra atualizar quando eu estou precisando dar uma commit >:P
