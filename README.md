@@ -10,6 +10,7 @@
 - Real audio player(wip)
 - the kernel works(is that even an feature?)
 - yh u get it
+- Safe in-memory VFS with beginner quests (Educational Mode)
 
 ## FAQ:
 ### Q: How will u optmize the code?
