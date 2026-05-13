@@ -27,9 +27,11 @@ class DirNode(VFSNode):
 
 
 class VirtualFileSystem:
-    def __init__(self) -> None:
+    with open("u.cfg", "r") as u_file:
+        username = u_file.read().strip()
+    def __init__(self, username: str) -> None:
         self.root = DirNode(name="", parent=None)
-        self._ensure_dir("/home/user")
+        self._ensure_dir(f"/home/{username}")
 
     def _ensure_dir(self, path: str) -> None:
         node = self.root
@@ -216,6 +218,9 @@ class QuestEngine:
         self._index = 0
 
     def _build_quests(self) -> List[Quest]:
+        with open("u.cfg", "r") as u_file:
+            username = u_file.read().strip()
+
         def file_content_matches(path: str, expected: str) -> Callable[[VirtualFileSystem, DirNode], bool]:
             def _check(vfs: VirtualFileSystem, cwd: DirNode) -> bool:
                 try:
@@ -227,22 +232,22 @@ class QuestEngine:
 
         return [
             Quest(
-                description="Quest 1: Navigate to /home/user and create a file named 'hello.txt'.",
-                hint="Hint: use 'cd /home/user' and 'touch hello.txt'.",
+                description=f"Quest 1: Navigate to /home/{username} and create a file named 'hello.txt'.",
+                hint=f"Hint: use 'cd /home/{username}' and 'touch hello.txt'.",
                 check=(
-                    lambda vfs, cwd: vfs.exists("/home/user/hello.txt")
-                    and vfs.path_of(cwd) == "/home/user"
+                    lambda vfs, cwd: vfs.exists(f"/home/{username}/hello.txt")
+                    and vfs.path_of(cwd) == f"/home/{username}"
                 ),
             ),
             Quest(
-                description="Quest 2: Create a directory named 'projects' inside /home/user.",
-                hint="Hint: use 'mkdir projects' while in /home/user.",
-                check=(lambda vfs, cwd: vfs.is_dir("/home/user/projects")),
+                description=f"Quest 2: Create a directory named 'projects' inside /home/{username}.",
+                hint=f"Hint: use 'mkdir projects' while in /home/{username}.",
+                check=(lambda vfs, cwd: vfs.is_dir(f"/home/{username}/projects")),
             ),
             Quest(
-                description="Quest 3: Write 'Welcome' into /home/user/projects/notes.txt using echo.",
-                hint="Hint: use \"echo Welcome > /home/user/projects/notes.txt\".",
-                check=file_content_matches("/home/user/projects/notes.txt", "Welcome"),
+                description=f"Quest 3: Write 'Welcome' into /home/{username}/projects/notes.txt using echo.",
+                hint=f"Hint: use \"echo Welcome > /home/{username}/projects/notes.txt\".",
+                check=file_content_matches(f"/home/{username}/projects/notes.txt", "Welcome"),
             ),
         ]
 
@@ -267,7 +272,9 @@ class CommandDispatcher:
     def __init__(self, vfs: VirtualFileSystem, quest_engine: QuestEngine) -> None:
         self.vfs = vfs
         self.quest_engine = quest_engine
-        self.cwd = self.vfs.resolve_dir("/home/user", self.vfs.root)
+        with open("u.cfg", "r") as u_file:
+            username = u_file.read().strip()
+        self.cwd = self.vfs.resolve_dir(f"/home/{username}", self.vfs.root)
         self.commands = {
             "pwd": self._cmd_pwd,
             "ls": self._cmd_ls,
@@ -449,7 +456,9 @@ Available commands:
         sys.exit(0)
 
 
-_vfs = VirtualFileSystem()
+with open("u.cfg", "r") as u_file:
+    _username = u_file.read().strip()
+_vfs = VirtualFileSystem(_username)
 _quests = QuestEngine()
 _shell = CommandDispatcher(_vfs, _quests)
 
